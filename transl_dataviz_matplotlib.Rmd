@@ -1,0 +1,513 @@
+---
+title: "Data Visualization"
+author: "William Spagnola"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+
+use_condaenv()
+```
+
+# Import Numpy, Matplotlib, Pandas
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+#Note: What do these do?
+# %matplotlib inline
+# plt.rcdefuaults
+
+```
+
+
+
+# Default 
+
+
+Default in Base R is scatterplot.
+```{r, fig.height = 3, fig.width = 4}
+x <- rnorm(1000)
+plot(x)
+```
+
+
+
+
+Like time series line plot
+Index is x-axis
+```{python}
+
+x = np.random.randn(1000)
+
+plt.figure(figsize=(4,3))
+plt.plot(x)
+
+
+```
+
+
+```{r}
+for (i in 1:20){
+  
+  if (i == 1){
+    plot(1, i, ylim = c(1,20), pch = i)
+  } else{
+    points(1, i, pch = i)
+  }
+}
+```
+
+
+```{r}
+
+for (i in 1:10){
+  
+  if (i == 1){
+    plot(1, i, col = i, xlim = c(1,1.5), ylim = c(1, 11), pch = 19)
+    axis(2, 1:10)
+    axis(1, NULL)
+    
+  } else{
+    points(1, i, col = i, pch = 19)
+  }
+}
+
+
+```
+
+
+
+
+# Histogram
+
+Note should also show how to convert between density and frequency
+```{r hist, fig.height=3, fig.width=4}
+
+x <- rnorm(1000)
+
+#Note: border = 1 (i.e. 'black') by defaulat
+hist(x, col = 3)
+
+```
+
+
+
+
+```{python hist}
+
+x = np.random.randn(1000)
+
+plt.figure(figsize=(4,3))
+plt.hist(x, edgecolor = 'k', facecolor = 'g');
+plt.show()
+```
+
+
+# Box plot
+
+# Bar plot
+
+```{r barplot, fig.height= 3, fig.width =4}
+
+pet_names <- c('cat', 'dog', 'fish', 'bird')
+pet_counts <- c(15, 18, 32, 9)
+
+barplot(names.arg = pet_names, height= pet_counts)
+
+```
+
+Python Barplot Matlab style
+
+```{python}
+
+pet_names = ['cat', 'dog', 'fish', 'bird']
+pet_counts = [16, 23, 45, 13]
+
+plt.figure(figsize = (5,4))
+plt.bar(x = pet_names, height = pet_counts);
+plt.title('Pet Store Inventory');
+plt.show()
+```
+
+
+Python Barplot OOP style
+```{python}
+
+fig, ax = plt.subplots(figsize = (5,4))
+
+pet_names = ['cat', 'dog', 'fish', 'bird']
+pet_counts = [16, 23, 45, 13]
+ax.bar(x = pet_names, height = pet_counts);
+ax.set_title('Pet Store Inventory');
+plt.show();
+
+```
+
+### Barplot using Dataframe
+
+
+```{r barplot_df, fig.width = 4, fig.height = 3}
+pen <- read.csv('data/penguins.csv')
+pen_species_cts <- as.data.frame(table(pen$species))
+names(pen_species_cts)[1] <- 'Species'
+
+barplot(Freq ~ Species, pen_species_cts)
+```
+
+```{python}
+
+pen = pd.read_csv('data/penguins.csv')
+
+pen_species_cts = pen.species.value_counts()
+pen_species_cts
+```
+
+
+```{python}
+#Matplotlib Style
+plt.figure(figsize=(5,4))
+plt.bar(pen_species_cts.index, pen_species_cts.values);
+plt.show()
+
+```
+
+
+```{python}
+#OOP style
+fig, ax = plt.subplots(figsize=(5,4))
+ax.bar(pen_species_cts.index, pen_species_cts.values);
+plt.show()
+
+```
+
+
+```{python}
+
+# With Pandas Wrapper
+pen_species_cts.plot.bar();
+```
+
+
+
+
+
+
+Load Penguins data, calculate average body mass by Species
+```{python}
+
+pen = pd.read_csv('data/penguins.csv')
+pen.head()
+
+
+# Multiple Aggregations
+#df.groupby('A').agg(['min', 'max'])
+
+#Select a column for aggregation
+
+#Different Aggregations per Column
+# df.groupby('A').agg({'B': ['min', 'max'], 'C': 'sum'})
+
+pen_wt_avg = pen.groupby('species').agg({'body_mass_g': ['mean']})
+
+```
+
+
+
+
+
+
+
+
+# Scatterplot
+
+```{r scatter,  fig.width = 4, fig.height = 3}
+
+n <- 1e3
+x <- rnorm(n)
+y <- 0.5*x + rnorm(n)
+
+plot(x, y, col = 4, pch = 19)
+
+```
+
+
+
+```{python}
+
+
+n = 1000
+
+# Note: np.random.randn() is Standard Normal Distribution
+# Note: Use np.random.rand.normal() to generate data from normal distributions other than Norm(0, 1)
+x = np.random.randn(n)
+y = 0.5*x + np.random.randn(n)
+
+plt.figure(figsize=(5,4))
+plt.scatter(x, y)
+
+```
+
+
+# Scatter Plot: Grouped Data
+
+Note that in matplot style (as in Base R), we can keep calling the same functions to add morelayers to graph
+```{python}
+n = 1000
+x = np.random.randn(n)
+y1 = x + np.random.randn(n)
+y2 = 2 + x + np.random.randn(n)
+
+
+
+plt.figure(figsize=(10,4))
+plt.scatter(x, y1, label = 'Pre-Test', color = 'r', alpha = 0.5)
+plt.scatter(x, y2, label = 'Post-Test', color = 'b', alpha = 0.5)
+plt.legend(loc = 'topleft')
+```
+
+
+
+Scatterplots are much simpler in R!!!!
+```{r scatter_group, fig.width = 6, fig.height = 4}
+pen <- read.csv('data/penguins.csv')
+
+c_map <- c('blue', 'red', 'green')[as.numeric(as.factor(pen$species))]
+
+plot(pen$body_mass_g, pen$flipper_length_mm, col = c_map, xlab = 'Body Mass (g)', ylab = 'Flipper Length (mm)')
+legend('topleft', legend = unique(pen$species), col = unique(c_map), pch = 1, cex = .8)
+```
+
+
+
+
+You can use a list to specify colors for 
+
+However, it doesn't seem as though you can create a legend for these colors unless you call scatter for each group./
+```{python}
+#pen.species.unique()
+#pen.columns
+
+#color_dict = { 'Allan':'red', 'Betty':'blue', 'Chris':'black', 'Diane':'green','Eugene':'purple' }
+#plt.scatter( data['a'], data['b'], color=[ color_dict[i] for i in data['c'] ] )
+
+color_dict = {'Adelie': 'red', 'Gentoo': 'green', 'Chinstrap': 'blue'}
+color_list = [color_dict[i] for i in pen['species']]
+
+# You can use list comprehension to color scatterplot
+plt.figure(figsize=(6,4.5))
+ plt.scatter(x = pen['flipper_length_mm'],
+                      y = pen['body_mass_g'],
+                    
+                      c = color_list);
+
+plt.xlabel('Flipper Length (mm)')
+plt.ylabel('Body Mass (g)')
+```
+
+
+You can use a for loop to call scatter() for each groupand use label argument.
+Then you call plt.legend() and the legend will automatically match the markers/group labels
+```{python}
+
+species_unique = pen.species.unique()
+mass = pen.body_mass_g
+flip = pen.flipper_length_mm
+
+plt.figure(figsize=(6,4.5))
+for species in species_unique:
+
+  plt.scatter(mass[pen.species == species], flip[pen.species == species], label = species )
+
+plt.xlabel('Body Mass (g)')
+plt.ylabel('Flipper Length (mm)')
+plt.legend()
+
+```
+
+
+
+```{python}elie'
+
+pen = pd.read_csv('data/penguins.csv')
+pen.columns
+#flip_ln = 
+plt.scatter(x=pen.bill_length_mm, y = pen.bill_depth_mm, c=pen.species)
+
+```
+
+
+# Line Plot
+
+
+Time Series
+
+ 1. Fix X Axis
+```{python}
+import datetime
+from pandas_datareader import data as pdr
+
+
+start = datetime.datetime(2020, 1, 1)
+end = datetime.datetime(2020, 10, 1)
+
+
+# Note:Should save this data as CSV !!!!
+yahoo = pdr.get_data_yahoo('iex', start, end)
+
+
+yahoo.info()
+```
+
+
+#### Notes
+  1. Adjust x-axis to show month names
+  2. Do same graph with OOP style code
+  3. Use index filtering with dates
+
+```{python}
+
+plt.figure(figsize = (8, 3))
+plt.plot(yahoo.index, yahoo.High, yahoo.index, yahoo.Low);
+plt.show()
+```
+
+
+#### OOP Style: Histogram
+```{python}
+n = 1000
+x = np.random.randn(n)
+
+
+fig, ax = plt.subplots();
+fig.set_size_inches(10,5) # Allows you to readjust figsize 
+ax.hist(x, edgecolor = 'k', facecolor = 'r');
+
+plt.show()
+
+```
+
+
+#### OOP Style: Barplot
+
+
+
+
+#### OOP Style: Scatterplot
+```{python}
+n = 1000
+x = np.random.randn(n)
+y = x +  np.random.randn(n)
+
+fig, ax= plt.subplots(figsize = (10,5))
+
+ax.scatter(x, y)
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_title('Y ~ (x, 1), X ~ Norm(0, 1)')
+```
+
+
+### Line Plot: Grouped Data
+
+
+
+# Set ticks
+Note that the methods for setting tick marks having very different names in matplotlib depending on the style (i.e. Matlab vs. OOP).
+
+#### Set ticks: Matlab Style
+
+
+
+#### Set Ticks: OOP Style
+
+
+
+
+
+
+# Plot Features
+  1. Title
+  2. Labels
+  3. Ticks
+  4. Limits
+  5. Markers
+  6. Annotate
+  
+  
+# Subplots
+
+```{r r_subplot, fig.width = 6, fig.height = 5}
+
+n <- 1e3
+x <- rnorm(n)
+y <- x + rnorm(n)
+
+par(mfrow=c(2,2))
+hist(x, main = '')
+hist(y, main = '')
+plot(1:length(y), y, xlab = 'index',)
+
+plot(x, y)
+
+```
+
+Note that in ggplot, the input should be a tidy data.frame.    GGplot has facets but these are slightly different from panels.  
+
+```{python}
+
+# Note Nested tuples
+# I think number of tuples equals number of rows
+# Number of axes within each tuple equal number of cols
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize = (6, 4))
+
+n = 1000
+x = np.random.randn(n)
+y = x +  np.random.randn(n)
+
+# Note: learn how to add labels for each subplot
+#set_title() or set_xaxis()
+ax1.hist(x);
+ax2.hist(y);
+ax3.plot(y); 
+ax4.scatter(x, y); 
+plt.show()
+
+
+```
+
+
+```{python}
+# Create four polar axes and access them through the returned array
+
+
+#Note: with this method you can use a for loop 
+
+#fig, axs = plt.subplots(2, 2, subplot_kw=dict(polar=True))
+#axs[0, 0].plot(x, y)
+#axs[1, 1].scatter(x, y)
+```
+
+
+```{python}
+
+#Matlab style
+
+# Share a X axis with each column of subplots
+#plt.subplots(2, 2, sharex='col')
+
+```
+
+
+
+## Color Maps 
+
+
+

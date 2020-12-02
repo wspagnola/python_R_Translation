@@ -1,0 +1,247 @@
+---
+title: "Pandas Data Viz"
+author: "William Spagnola"
+date: "10/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+
+use_condaenv()
+```
+
+# Import Numpy, Matplotlib, Pandas
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+```
+
+
+
+
+# Pandas Wrapper
+
+Load Data
+
+```{python}
+
+pen = pd.read_csv('data/penguins.csv', index_col = 0)
+pen.head()
+```
+
+Explore columns
+```{python}
+pen.columns.unique()
+```
+
+
+
+## Histograms
+
+
+```{python}
+
+plt.figure(figsize=(5,4))
+pen['bill_length_mm'].plot.hist(edgecolor = 'k')
+
+```
+
+
+
+
+
+
+```{python}
+plt.figure(figsize=(5,4))
+pen.bill_depth_mm.plot(kind='hist', edgecolor = 'k')
+```
+
+## Boxplots
+
+```{python}
+
+# props = dict(boxes="DarkGreen", whiskers="DarkOrange", medians="DarkBlue", caps="Gray")
+# df.plot.box(color=props, patch_artist=True)
+
+
+# Note: How annoying it is to change fill color using pandas wrapper
+plt.figure(figsize=(5,4))
+prop_dict = dict(boxes = 'g', whiskers = 'k', medians='k', caps='k')
+pen.flipper_length_mm.plot.box(color=prop_dict, patch_artist= True)
+plt.show()
+```
+
+
+
+## Move to pandas tutorial
+```{python}
+pen.set_index('species')
+
+```
+
+
+```{python}
+
+# Pivot from long to wide
+
+pen_temp = pen[['species', 'body_mass_g']].copy()
+
+
+pen_temp['body_mass_kg'] = pen.body_mass_g / 1000
+
+pen_temp.drop(columns = 'body_mass_g', inplace=True)
+
+#pen_temp.head()
+
+
+pen_wide= pen_temp.pivot(columns = 'species', values = 'body_mass_kg')
+pen_wide.head()
+````
+
+```{python}
+plt.figure(figsize=(4,3))
+pen_wide.plot.box()
+plt.ylabel('Body Mass (g)')
+plt.title('Grouped Boxplot')
+```
+
+
+
+## Pandas Barplot
+```{python}
+pen.columns
+```
+
+
+```{python}
+
+plt.figure(figsize=(5,4))
+pen.island.value_counts().plot.bar();
+
+
+#count('island').plot.bar()
+```
+
+```{python}
+
+# Note that size is equivalent to SQL count(*)
+
+plt.figure(figsize=(5,4))
+pen.groupby(['year']).size().plot.barh()
+
+```
+
+
+
+
+
+```{python}
+pen.groupby('species').body_mass_g.mean().plot(kind = 'bar')
+
+```
+
+```{python}
+
+plt.figure(figsize=(5,4))
+pen.groupby('sex').flipper_length_mm.mean().plot(kind = 'barh')
+```
+
+# Lineplot
+
+```{python}
+yahoo_ts = pd.read_csv('data/yahoo_timeseries_2020.csv', index_col = 0)
+yahoo_ts.head()
+```
+
+
+```{python}
+#plt.figure(figsize=(5,4))
+yahoo_ts[['High', 'Low']].plot(figsize=(12,5))
+#Note: how do I adjust legend position?
+```
+
+
+```{python}
+
+```
+
+
+
+# Scatterplot
+
+
+Get unique penguin  species names
+```{python}
+
+pen['species'].unique()
+```
+
+
+```{python}
+
+
+# Note: could create a for loop but first line would go outside of it
+# How would you cycle through colors?  Would you need to create a list with length equal to # of unique groups?
+ax = pen[pen.species=='Adelie'].plot.scatter(x = 'body_mass_g', 
+                                             y = 'flipper_length_mm', 
+                                             label = 'Adelie', 
+                                              color  = 'r')
+pen[pen.species=='Gentoo'].plot.scatter(x ='body_mass_g', 
+                                        y = 'flipper_length_mm', 
+                                        label = 'Gentoo', 
+                                        ax = ax, 
+                                        color = 'g');
+pen[pen.species=='Chinstrap'].plot.scatter(x= 'body_mass_g',
+                                           y= 'flipper_length_mm',
+                                           label = 'Chinstrap',
+                                           ax = ax,
+                                           color = 'b');
+
+plt.title('Penguin Species')
+```
+
+
+
+
+Note: This doesn't work
+```{python}
+
+
+pen_wide2 = pen.pivot(columns = 'species', values = ['bill_length_mm', 'bill_depth_mm'])
+pen_wide2.head()
+
+# Note: use tuple to select columns based on multi-index
+cond = [pen_wide2[('bill_length_mm', 'Adelie')].gt(0),
+        pen_wide2[('bill_length_mm', 'Gentoo')].gt(0),
+        pen_wide2[('bill_length_mm', 'Chinstrap')].gt(0)]
+
+
+choices = [1, 2, 3]
+pen_wide2['species'] = np.select(cond, choices)
+pen_wide2.head()
+pen_wide2.tail()
+# pen_wide2.plot.scatter(x = 'bill_length_mm', y = 'bill_depth_mm', c= 'species')
+#                               c = 'species', colormap = 'viridis')
+```
+
+
+```{python}
+
+
+
+
+```
+
+
+
+```{python}
+
+```
+

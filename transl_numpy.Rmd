@@ -1,0 +1,433 @@
+---
+title: 'Numpy: Python/R Translations'
+author: "William Spagnola"
+date: "10/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+library(reticulate)
+use_python("/Users/Leizel/anaconda3/python.exe")
+```
+
+
+```{r}
+py_config()
+```
+
+
+
+# Importing Numpy
+
+```{python}
+
+import numpy as np
+
+```
+
+
+
+
+# Creating Vectors/Arrays
+Numpy arrays are analogous to vectors/matrices/arrays in base R.
+They can only contain one datatype.
+We wills start with 1-dimension arrays.  Normally these are vectors in R
+
+
+Create vectors in R with c(). 
+Note that by default the vector 
+```{r}
+
+vec <- c(34, 6, 8, 9)
+vec
+is.vector(vec)
+```
+
+
+Arrays and Matrices.  Notice they are not consider vectors even if they are 1-dimensional
+```{r}
+arr <- array(c(4, 6, 8, 9))
+arr
+
+is.vector(arr)
+
+mat <- matrix(c(4, 6, 8, 9),  ncol = 1)
+mat
+
+is.vector(mat)
+
+mat_to_vec <- as.vector(mat)
+is.vector(mat_to_vec)
+```
+Class function call will show data type of vector/matrix/array, not the class of the composite object.
+```{r}
+class(vec)
+class(arr)
+class(mat)
+class(mat_to_vec)
+
+```
+
+
+
+## Numpy Arrays
+There is no Numpy vector class.  Numpy 1-d arrays are considered the same class as multi-dimensional arrays.
+There is a numpy matrix class which we will explore in a later section.
+
+First let's explore how to create numpy arrays.  We can create an array from a list using np.array().
+
+Creating Array with list
+```{python}
+
+
+int_arr = np.array([5, 6, 7, 1, 2])
+float_arr = np.array([3.5, 4.69, 2.10])
+char_arr = np.array(['monkey', 'cow'])
+
+
+```
+
+
+The type method will indicate that each array is a numpy array.
+The dtype attribute will show the actual datatype of the elements within the array
+```{python}
+int_arr = np.array([5, 6, 7, 1, 2])
+float_arr = np.array([3.5, 4.69, 2.10])
+char_arr = np.array(['monkey', 'cow'])
+
+
+type(int_arr)
+type(float_arr)
+type(char_arr)
+int_arr.dtype
+float_arr.dtype
+char_arr.dtype
+```
+
+
+```{r}
+py_config()
+```
+
+
+```{python}
+py.config()
+```
+
+
+# Creating Vectors/Arrays with intervals
+
+```{r}
+
+# Numeric vectors
+
+# Creates a vector of elements from a to b (by 1)
+x1 <- 1:30
+
+#Creates intervals from a to b by n
+x2 <- seq(2, 20, 3)
+
+# Creates n evenly-spaced intervals
+x3 <- seq(0, 1, length.out = 5)
+
+x1
+x2
+x3
+
+```
+
+
+```{python}
+
+# Note this will start at 0 and not include 30
+x1 = np.arange(30)
+
+# Start at 1.  Add 1 to second argumnent in order to include 30 (Same as 1:30 in r)
+x2 = np.arange(1, 30 + 1)
+
+x3 = np.arange()
+
+
+#You can  also create a list in native Python and convert it to an array
+
+
+
+```
+
+
+
+# Creating array with repeated sequences
+
+```{r}
+
+```
+
+
+```{python}
+
+np.repeat([2, 4, 1], 5) # Like rep(x, each= n)
+np.tile([2, 4, 1], 5) # Like rep(x, times = n)
+
+```
+
+#np.zeroes, np.ones
+```{python}
+
+np.zeroes (10)
+np.ones(10)
+```
+
+
+
+
+# Creating arrays using Random Variables
+
+I've noticed  that many Numpy tutorials introduce random functions later.  Howver, saince I'm a statistician, I'm often creating arrays of with common probability distributions such as the binomial, normal, uniform, and poisson distributions
+
+
+```{r}
+n <- 1e3
+
+?hist
+
+par(mfrow = c(2,2))
+# Min, Max arguments but going stick with standard uniform
+unif_dist <- runif(n)
+hist(unif_dist, main = '', xlab = 'Uniform', freq = FALSE)
+
+norm_dist <- rnorm(n, mean = 5, sd =  2)
+hist(norm_dist, main = '', xlab = 'Normal', freq = FALSE)
+
+binom_dist <- rbinom(n, size = 7, prob = .65)
+binom_counts <- table(binom_dist) / length(binom_dist)
+barplot(binom_counts, main = '', xlab = 'Binomial', ylab = 'Density')
+
+pois_dist <- rpois(n, lambda =5)
+pois_counts <- table(pois_dist) / length(pois_dist)
+barplot(pois_counts, main = '', xlab = 'Poisson', ylab = 'Density')
+```
+
+```{python}
+
+n = 1000
+
+# Standard Uniform: np.random.rand()
+# Uniform: np.random.uniform() allows  you to change a and b parameters
+unif_dist = np.random.rand(n)
+
+# Standard Normal: np.random.randn()
+# Normal: np.random.normal() allows you to change mean and standard deviation
+norm_dist = np.random.normal(loc = 5, scale = 2, size = n)
+
+pois_dist = np.random.poisson(6, n)
+pois_values, pois_counts = np.unique(pois_dist, return_counts = True)
+
+
+binom_dist = np.random.binomial(7, .65, n)
+binom_values, binom_counts = np.unique(binom_dist, return_counts = True)
+
+import matplotlib.pyplot as plt
+
+# Create subplots ?
+# Matplab style
+# plt.figure(figsize=(10,4))
+# plt.subplot(1, 4, 1).hist(norm_dist)
+# plt.subplot(1, 4, 2).hist(unif_dist)
+# plt.subplot()
+
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2, figsize = (10,8));
+
+
+ax1.set_xlabel('Normal')
+ax1.hist(norm_dist, edgecolor = 'k');
+
+ax2.set_xlabel('Uniform')
+ax2.hist(unif_dist, edgecolor = 'k');
+
+ax3.set_xlabel('Poisson')
+ax3.bar(x = pois_values, height = pois_counts);
+
+ax4.set_xlabel('Binomial')
+ax4.bar(x = binom_values, height = binom_counts);
+plt.show();
+```
+
+
+
+
+# Arrays/Matrices
+
+## R: matrix()
+```{r}
+x <- sample(1:10, 9 , replace = TRUE)
+x
+mat <- matrix(1:9, nrow = 3, ncol =3)
+mat
+
+mat2 <- matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)
+```
+
+
+
+## R: cbind(), rbind()
+```{r}
+mat3 <- cbind(c(1, 2, 3), c(4, 5, 6), c(7, 8,9))
+
+
+mat4 <- rbind(c(1,2,3), c(4,5,6), c(7,8,9))
+
+mat3
+mat4
+```
+
+
+## Python :  reshape()
+```{python}
+
+x = np.arange(9)
+
+x.reshape(3,3 )
+.
+```
+
+
+# Convert Matrix/Multi-Dimensional array back to Vector
+
+In R, you can use c() or as.vector to convert a multi-dimensional array or 2-d matrix into a vector
+```{r}
+mat <- matrix(1:9, 3, 3, TRUE)
+mat
+
+
+c(mat)
+
+as.vector(mat)
+
+```
+
+
+```{python}
+x = np.arange(1, 10).reshape(3,3)
+
+x
+
+x.reshape(-1)
+
+x3 = np.arange(1, 28).reshape((3,3,3))
+x3
+ 
+x3.reshape(-1)
+
+```
+
+
+# Python Stacking: Vstack, hstack, stack, dstack, column_stack
+```{python}
+
+
+x1 = [0, 1, 2]
+x2 = [3, 4, 5]
+x3 = [6, 7, 8]
+
+np.vstack((x1, x2, x3)) # Like rbind
+
+
+np.stack((x1, x2, x3),  axis = 0) # Like rbind
+np.stack((x1, x2, x3), axis =1 ) # Like cbind
+
+
+```
+
+
+# Concatenate
+
+In R, you can use c()
+```{r}
+
+x1 <- 1:3
+x2 <- 4:5
+x3 <- 6:10
+x1
+x2
+x3
+x <- c(x1, x2, x3)
+x
+
+
+```
+In Python, you can use np.concatenate()
+```{python}
+
+
+
+x1 = np.arange(1, 4)
+x2 = np.arange(4, 6)
+x3 = np.arange(6, 11)
+x1
+x2
+x3
+x = np.concatenate((x1, x2, x3))
+x
+```
+
+
+
+# Frequency Counts
+
+
+## R table() function
+```{r}
+
+# Note R also has a unique function but only returns unique values, not their counts
+
+
+x <- rpois(100, 6)
+
+print('R Table')
+table(x)
+
+print('R Unique Values')
+unique(x)
+
+```
+
+
+
+## Python unique() function
+```{python}
+
+# Note 
+x = np.random.poisson(6, 100)
+x_values, x_counts = np.unique(x, return_counts = True)
+
+
+print('X Values: {}'.format(x_values))
+print('X Counts: {}'.format(x_counts))
+```
+
+
+
+
+# Slicing/Indexing/Mutating
+
+
+# Concatenation
+
+# Other Useful Numpy Methods
+ 1. np.nan()
+ 2. np.exp()
+ 
+ 
+# Functions
+  1. Universal Functions
+  2. Apply
+  3. Lambda Functions
+
+
+# Next Steps
+ 1. Creating DataFrames and Series with Pandas
+ 2. Visualizing Data with Matplotlib
+ 

@@ -1,0 +1,758 @@
+---
+title: "Native Python Basics"
+author: "William Spagnola"
+date: "10/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+use_python("/Users/Leizel/anaconda3/python.exe")
+
+```
+
+
+
+# Printing
+
+## R
+```{r cars}
+print("Hello World!")
+
+```
+
+## Python
+```{python}
+
+print("Hello World!")
+```
+
+# Data Structures
+
+```{r}
+num_vec <- c(4, 2, 4,5, 6)
+char_vec <- c('dog', 'cat', 'bird', 'hamster')
+
+len <- length(num_vec) + length(char_vec)
+mixed_vec <- c(num_vec, char_vec)[sample(1:len, len)]
+
+
+list <- list(mixed_vec)
+list
+
+```
+
+## Python Lists
+```{python}
+num_list = [2, 4, 5, 6]
+char_list = ['dog', 'cat', 'bird', 'hamster']
+mixed_list = ['dog',2, 5, 'cat', 3, 'hamster']
+
+num_list
+char_list
+mixed_list
+```
+
+
+## Python Tuples
+```{r}
+
+```
+
+## Python Dictionaries
+```{r}
+
+```
+
+# Indexing and Slicing 
+```{r}
+
+```
+
+```{python}
+
+print('\nPractice slicing')
+lst = [0, 1, 2, 3]
+lst[:3]
+lst[2:]
+lst[::2]
+lst[-1]
+
+print('Slicing based on sequences')
+#First default = 0
+# Second default = length of list
+# Third Default = 1
+long_list = list(range(10))
+long_list
+long_list[2::2]
+long_list[:6:3]
+```
+
+
+
+# Sequences
+
+
+## R seq() function
+```{r}
+seq(1, 30, 2)
+seq(5, 10, 1)
+
+```
+
+## PYTHON range() function
+```{python}
+
+x = list(range(20))
+y = list(range(10, 20))
+z = list(range(10, 20, 2))
+print('x: {} \ny: {} \nz: {}'.format(x, y, z))
+
+
+```
+
+
+# Repeating 
+
+
+In R, you can use the rep() function to repeat a vector.
+The default argument is times.  This repeats the entire vector.
+Using the "each" argument repeats each element. 
+```{r}
+
+x <- c(3, 1, 5, 10, 12)
+y <- c('red', 'blue', 'yellow', 'green')
+
+rep(x, 2)
+rep(y, 3)
+rep(y, each = 3)
+
+```
+
+
+In native Python, we can use the multiplication symbol "*" to repeat a list.  
+```{python}
+
+x = [3, 1, 5, 10, 12]
+y = ['red', 'blue', 'yellow', 'green']
+
+2*x
+3*y
+
+# Now sure how to do rep(list, each = n) in Python
+
+```
+
+
+
+
+# For Loops
+
+In R, indentation is used for organization but does not have any inherent meaning.
+Brackets are used to contain steps within a for loop.
+A common way to iterate through a list is to write 1:length(vector)
+This creates a vector with numbers 1 to 7 (the length of the vector).
+The for loop iterates through the vector.
+In this case, i represents the current iteration.
+We can print out each element
+
+
+```{r}
+
+for (i in 1:10){
+  
+  print(i)
+}
+
+
+```
+
+
+```{r}
+ zoo <- c('lion', 'tiger', 'bear', 'elephant', 'giraffe', 'monkey', 'panda')
+
+print(paste('length of zoo vector:', length(zoo)))
+print('---------------------------')
+
+for (i in 1:length(zoo)){
+  
+    
+  
+}
+```
+
+
+Instead of 1:length(vector), we can use seq_along.  
+```{r}
+for (i in seq_along(zoo)){
+  
+    print(paste('Animal', i, ':', zoo[i]) )
+
+}
+```
+
+We can also loop through the vector this way if we want to simply print out each element
+Generally, I don't think this is very common in R.  
+Since R is vectorized, it's easy to extract elements or apply a function to each element without a for loop. 
+```{r}
+
+print(x)
+
+for (i in zoo){
+  
+  print(i)
+}
+
+```
+
+
+
+
+
+## Python For Loops
+
+In pythons, the body of the loop is demarcated by indentation instead of brackets.
+In addition, you notice that you do not need parentheses around the for statement. 
+
+In Python, you often use the range function in order to loop through a sequence of numbers.
+Notice by default the index starts at zero.  
+Also notice that the interval is half-open (i.e. it doesn't include that last element in function call).
+Range(10) prints out numbers 0 through 9.
+
+
+
+```{python}
+
+print('First range')
+for i in range(10):
+  print(i)
+
+print('\nSecond range')
+
+for i in range(3,10):
+  print(i)
+  
+print('\nThird Range')
+for i in range(0, 12, 2):
+  print(i)
+
+
+```
+
+You can loop through list in Python in the same way you can loop through a vector in R
+```{python}
+
+zoo = ['lion', 'tiger', 'bear', 'elephant', 'giraffe', 'monkey', 'panda']
+
+for animal in zoo:
+  print(animal)
+
+
+
+```
+
+Similar to seq_along, to you loop through the indexes of the list.  
+You can also still extract the individual elements from zoo list using multiple assignment.
+Multiple assignment is a useful technique in Python that can be a little tricky for R users to get the hand of.
+The indexes of zoo are assigned to i and the string contained in each element of zoo are assigned to animal. 
+```{python}
+
+for i, animal in enumerate(zoo):
+  print ('Animal', i, ': ', animal)
+
+```
+
+
+
+# Conditional Statements (If/Else)
+
+```{r}
+
+# Enter your birth year here
+birth_year <- 1983
+
+
+# birth_year <- 2025
+#birth_year <- 1893
+#birth_year <- 'dog'
+
+
+#Note that you don't actually need print() in R to print string but I find it makes code easier to read. 
+
+if (birth_year < 1925 & birth_year >= 1900){
+  'You are part of the greatest generation'
+} else if (birth_year < 1945 & birth_year >= 1925){
+  'You are part of the silent generation'
+} else if (birth_year < 1965 & birth_year >= 1945){
+  'You are a baby boomer'
+} else if (birth_year < 1980 & birth_year >= 1965){
+  'You are part of generation X'
+} else if (birth_year < 1986 & birth_year >= 1980){
+  'You are an Xennial!  The best generation!'
+} else if (birth_year < 2000 & birth_year >= 1986){
+  'You are a millenial!'
+} else if (birth_year < 2020 & birth_year >= 2000){
+  'You are a Zoomer!'
+} else{
+  "I don't know what generation you are!"
+}
+```
+
+
+## Python Condition Statements
+
+
+Similar to for loops in Python, the body of each condition is demarcated by indentation instead of brackets. 
+If there is only one condition in the conditional statement, you do not need parentheses.
+However, if there are multiple conditions within a conditional statement, you need to put each condition inside
+a separate set of parentheses.
+```{python}
+
+birth_year = 1983
+
+if (birth_year < 1925) & (birth_year >= 1905):
+  
+  print('You are part of the greatest generation')
+  
+elif birth_year == 1983:
+    print('You were born the same year I was')
+   
+elif (birth_year < 1985) & (birth_year >= 1980):
+
+  print('You are a millenial!')
+  
+else:
+
+  print("I don't know what generation you are!")
+
+
+```
+
+
+
+
+
+
+
+# Creating User-defined Functions
+
+
+
+
+# Strings
+
+# Assignment
+
+In R, it is common to use "<-" for assigning values to objects although "=" works as well.
+```{r}
+x <- 'cat'
+y = 'dog'
+x; y
+```
+
+In python, you can only use the "=" sign for assignment
+
+
+# Concatenating Strings
+
+When we talk about concatenate strings, we mean we are taking two or more string objects and combining them into a single string object.
+
+This is different from concatenating lists and vectors when we are combining all the elements together into another object whose length is equal to the sum of the length of the list or vectors we used to create it.
+
+In R you can use the paste, paste0 functions to concatenate strings.
+You can
+```{r}
+x <- 'dogs'
+y <- 'cats'
+
+paste(x, y)
+paste0(x,y)
+paste(x ,y, sep = ', ')
+paste(x, 'and', y)
+
+# Doesn't work 
+#print(x, y)
+
+cat(x, y)
+cat('\n') #skip line
+cat(x, y, sep = " and ")
+
+
+```
+
+
+
+## PY
+Unlike R, you can pass multiple strings to a single call of the print() without needing
+The addition sign (+) also concatenates string objects by default.
+
+```{python}
+
+x = 'dogs'
+y = 'cats'
+x + y
+print(x, y)
+x + ' and ' + y
+
+
+```
+
+
+# Python Quirks
+
+
+## Python Formats
+```{python}
+
+print("I have 3 {} and 2 {}".format(x,y))
+```
+
+
+
+
+## Immutable vs. Mutable
+
+
+In R, I believe all objects are mutable.  This means that after an object is created, you can assign different values to any element.
+
+Notice that we can also assign a single scalar to multiple elements
+
+Also notice that we can use either a slice ("2:3") or a vector of indices to select a subset of the vector.
+```{r}
+vec = c(3, 4, 5, 6)
+vec[3]
+vec[3] = 9999
+vec
+vec[2:3] = 1983
+vec
+vec[c(1, 4)] = 2020
+vec
+
+
+# Select every second element of vector
+long_vec = 1:10
+long_vec[seq(2, length(long_vec), by = 2)]
+```
+
+Python lists are mutable.
+In Python you can slice data.  
+
+However, unlike in R, you cannot assign a scalar to multiple elements in a list. 
+The length of the new data must be equal to the number of elements you are changing.
+Also you can not pass a list of indices in order to subset a list.
+You will need a list comprehension instead.  This will be explained in the next section.
+```{python}
+
+lst = [2, 4, 1, 0]
+lst[1]
+lst[1] = 9999
+lst
+lst[3:4] = [1983, 1983]
+lst
+
+
+
+```
+
+
+
+Python tuples are immutable
+```{python}
+tup = (2, 4, 5, 6)
+tup[2]
+tup[2] = 12
+
+```
+
+
+
+# List Comprehensions
+
+Unlike R, native Python lists are not vectorized
+Instead of writing an entire for loop, which can be verbose, you can compactly write a list comprehension to accomplish some of things you can do in R.
+
+
+```{r}
+
+vec <- 0:9
+vec[c(3, 4, 7)]
+
+vec[vec > 5]
+
+
+2*vec
+
+ifelse(vec > 5, 2*vec, vec*-1)
+
+
+```
+
+```{python}
+
+lst = list(range(10))
+lst
+
+# To select elements in a list of indices
+[lst[idx] for idx in [3, 4, 7] ]
+
+
+# To Select a subset of elements from list that satisfy a  certain conditions
+[x for x in lst if x > 5]
+
+# Can conditionally mutate elements using if/else 
+[2*x if x > 5 else -x  for x in lst]
+
+# Can use list comprehension apply a function  to each element of list
+[2*x for x in lst]
+
+```
+
+# Concantenation/Appending
+
+You can use the c() function in R to concatenate lists and vectors.
+The c in c() is short for concatenate. 
+```{r}
+
+
+lst1 <- list('a', 'b', 'c', 'd')
+lst2 <- list('x', 'y', 'z')
+
+long_lst <- c(lst1, lst2)
+long_lst
+class(long_lst)
+
+
+print('Concatenate Vectors')
+vec1 <- unlist(lst1)
+vec2 <- unlist(lst2)
+vec1
+vec2
+
+long_vec <- c(vec1, vec2)
+long_vec
+```
+
+
+
+
+You can use + to concatenate two lists.
+You can use the append() method to add a single element to the end of a list.
+Notice if you try to append a list to another list, it simply assigns the entire list as the last element in the first list.  
+
+```{python}
+
+#Note
+lst = list(range(10))
+lst + lst
+
+lst.append(400)
+lst
+
+
+lst.append(lst)
+lst
+```
+
+## Nested List in R
+```{r}
+lst2 <- list('x', 'y', 'z')
+list(lst1, lst2)
+
+```
+
+
+
+## Copies vs. Views
+
+
+I believe assignment in R always creates a copy.  Changing the copy will not affect the original object.
+
+```{r}
+
+x <- c(1, 9, 8, 3)
+
+#View
+x[3]
+
+x*2
+
+# Not sure how to change a single element or subset of elements in a view while displaying all elements
+
+# Copy
+
+y <- x
+y[2] <- -1111
+
+# Changes in y do not apply to x
+y
+x
+
+```
+
+
+However, in Python assigning a list to another list creates a view.   In the example below, x and y refer to the same object.  Changing y will also change x and vice versus.
+
+
+You will have to apply the copy() method and assign it to a new variable in order to create a copy of an object.  The copy will refer to a new object.  Changing the copy will not change the original.  This behavior is similar to the default assignment process in R. 
+
+```{python}
+
+x = [4, 5, 6, 9]
+y = x
+x
+y
+
+
+#Note changing y also changes x
+y[1] = 9999
+y
+x
+
+#Note changing x also changes y
+x[2] = 77777
+x
+y
+
+# Y and X refer to the same object 
+y is x
+
+# We can tell what object these refer to by calling the id() function
+id(x)
+id(y)
+
+````
+
+
+Python: Copies
+```{python}
+a = [4, 5, 6, 9]
+b = a.copy()
+b
+b[1] = 9999
+b
+
+# a remained unchanged
+a
+
+
+
+# a and b refer to different objects
+a is b
+id(a)
+id(b)
+```
+
+
+# Installing/Loading Packages
+
+
+```{r}
+
+#install.packages('tidyverse')
+library(tidyverse)
+```
+
+
+
+
+In Python you can use  "pip install" or "conda install" to install new packages.  You will have to install anaconda in order to use "conda install."   It is recommended to use this  code in the command prompt instead of in the actual script file.  Anaconda also includes Navigator which has a GUI for install packages and managing environments.  Once installed, you can use import to load libraries.  You can alias these libraries using "as".
+```{python}
+
+import os
+import numpy as np
+```
+
+  In general, package and environment management is much more complicated in Python.  I think this is because CRAN (a repository where most  R packages are uploaded/downloaded) is careful to make sure packages do not conflict with each other.  
+
+
+
+R will let you know when one function is "masked" by a function in another. 
+
+
+
+
+This is a little confusing for R programmers.  Numpy objects have "attributes" such as mean.  Consequently, you don't need to specify np alias when using dot notation for methods.
+
+However, when applying a numpy function to a non-numpy object such as a list, you need to specify the alias np so that Python knows that you want a function from the Numpy library. 
+```{python}
+
+import numpy as np
+
+arr = np.arange(13)
+
+
+np.mean(arr)
+
+# numpy object  Has 
+arr.mean()
+
+np.mean([5, 2, 5])
+
+# Doesn't work
+# [5, 2, 3],mean()
+# [5, 2, 3].np.mean()
+
+# This does work
+np.array([5, 2,3]).mean()
+
+```
+
+
+In Python you have to specify the library from which
+Note that when applying a function to an object type from a certian 
+
+
+
+
+# One Last thing...Setting/Changing Workign Directory
+
+```{r}
+
+getwd()
+
+setwd('..')
+
+getwd()
+
+setwd('Python_R_Translation')
+
+list.files()
+
+```
+
+```{python}
+
+import os
+
+os.getcwd()
+
+os.chdir('..')
+
+os.getcwd()
+
+os.chdir('Python_R_Translation')
+
+os.listdir()
+
+```
+
+
+
+# Next Steps
+
+Now that we have a basic understanding of native Python, we're ready to dive in to some common Python libraries for data analysis. 
+
+
+
+# Data Science Packages
+  - 1 Numerical arrays with Numpy
+  - 2 Data manipulation with Pandas
+  - 3 Data visualization with Matplotlib and Seaborn
+  - 4 Machine Learning with Scikit-learn
+  - 5 Natural Language Text with NLTK and string
+  - 6 Web scraping with BeautifulSoup
+
+

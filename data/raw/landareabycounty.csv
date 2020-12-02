@@ -1,0 +1,19 @@
+"County","FIPS","Year","Measure Type","Variable","Value"
+"Connecticut","09",2000,"Square Miles","Land Area",4844.78
+"Connecticut","09",2010,"Square Miles","Land Area",4842.33
+"Fairfield County","09001",2000,"Square Miles","Land Area",625.8
+"Fairfield County","09001",2010,"Square Miles","Land Area",624.89
+"Hartford County","09003",2000,"Square Miles","Land Area",735.44
+"Hartford County","09003",2010,"Square Miles","Land Area",735.09
+"Litchfield County","09005",2000,"Square Miles","Land Area",919.92
+"Litchfield County","09005",2010,"Square Miles","Land Area",920.56
+"Middlesex County","09007",2000,"Square Miles","Land Area",369.26
+"Middlesex County","09007",2010,"Square Miles","Land Area",369.3
+"New Haven County","09009",2000,"Square Miles","Land Area",605.64
+"New Haven County","09009",2010,"Square Miles","Land Area",604.5
+"New London County","09011",2000,"Square Miles","Land Area",665.91
+"New London County","09011",2010,"Square Miles","Land Area",664.87
+"Tolland County","09013",2000,"Square Miles","Land Area",410.07
+"Tolland County","09013",2010,"Square Miles","Land Area",410.21
+"Windham County","09015",2000,"Square Miles","Land Area",512.75
+"Windham County","09015",2010,"Square Miles","Land Area",512.91

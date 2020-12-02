@@ -1,0 +1,281 @@
+---
+title: "Web Scraping"
+author: "William Spagnola"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+use_condaenv()
+```
+
+## Import Packages
+
+```{python}
+import requests # Package for Making HTTP Requests i.e. extracts html code from website
+from bs4 import BeautifulSoup # HTML Parser;  Allows you to extract elements from HTML 
+import re # Regular Expressions
+
+```
+
+
+## Make HTTP Request 
+```{python}
+
+url = 'https://en.wikipedia.org/wiki/Alabama'
+page = requests.get(url)
+
+# Code 200 indicates successful download
+
+page.status_code
+```
+
+## Construct Beautiful Soup Object
+```{python}
+
+soup = BeautifulSoup(page.content, 'html.parser')
+
+
+# Not sure of best way to subset this
+pretty = soup.prettify()
+
+
+#print(soup.prettify()[0:20])
+```
+
+
+## Try to Pass R Object to Python
+```{r}
+state_names <- datasets::state.name
+
+```
+
+```{python}
+#state_names = r$state_names
+
+```
+
+
+
+
+Three methods to find content
+  1. find()
+  2. find_all()
+  3.
+```{python}
+
+
+tab = soup.find('table', {'class': 'infobox geography vcard'})
+
+tab.text[0:500]
+```
+
+```{python}
+
+table_rows = soup.find_all('tr', {'class': 'mergedrow'})
+
+#print(table_rows)
+
+for i, rows in enumerate(table_rows):
+
+  if(i <= 5):
+    print('Line {}:\n {}\n'.format(i, rows))
+  
+  else:
+    break 
+ 
+```
+## Print Rows
+```{python}
+for cell in table_rows[2:]:
+  y = cell.find('th', {'scope': 'row'})
+  print(y.text)
+```
+
+## Print Celss
+```{python}
+td_list = []
+
+
+for cell in table_rows:
+  x = cell.find('td')
+  
+  print(x.text)
+  
+```
+
+```{python}
+
+def extract_text(x):
+  y = x.find('th', {'scope': 'row'}).text
+
+  return y
+  
+print(y)
+
+def clean_text(x):
+  y = x
+ # y = x.replace("���" .  "")
+  return(y)
+```
+```{python}
+y = '\xa0�\xa0Governor'
+
+
+def clean_text(x, no_space):
+  y = x.encode('ascii', 'ignore')
+  y = str(y, 'utf-8')
+  y = y.replace('\'<U+FFFD>', '')
+  y = re.sub("\[\d\]", '', y)
+  y = re.sub('elevation.*$', 'elevation', repr(y))
+  y = y.replace("\'", "")
+  
+  if(no_space == True):
+    y = re.sub('\s', '_', repr(y))
+
+ # y = re.sub("\s\($", '', y)
+  return y
+```
+
+
+
+
+```{python}
+
+# Check Clean text
+clean_text('\xa0�\xa0Governor')
+
+```
+```{python}
+header_raw[0]
+```
+
+```{python}
+
+
+header_raw = [extract_text(cell) for cell in table_rows[2:]]
+#header = [cell.find('th', {'scope': 'row'}).text for cell in table_rows[2:]]
+
+header_raw
+
+
+```
+
+
+Note that can't scrape lowest elevation
+```{python}
+
+header = []
+header = [clean_text(i, True) for i in header_raw]
+
+len(header)
+header
+
+
+```
+
+
+```{python}
+values = []
+values = [clean_text(cell.find('td').text, False) for cell in table_rows[2:]]
+
+len(values)
+values
+```
+
+
+```{python}
+
+import pandas as pd
+
+df_t = pd.DataFrame(values)
+df = df_t.T
+df.columns = header
+df
+```
+
+## Get First Elemments
+  1. Get State Name
+  2. Get Anthem
+  3. Get Motto
+  4. Elevation
+    a. Average?
+
+ b. Lowest>
+
+
+**re.split(pattern, string, maxsplit=0, flags=0)**
+```{python}
+
+anthem_motto = [cell.find('td').text for cell in table_rows[:2] ]
+
+anthem_motto[0]
+
+for text in anthem_motto:
+  text = re.sub('\W&^(:)', '', text)
+  re.split('\:', text, maxsplit = 1)
+
+```
+
+
+
+## Get All States
+
+```{python}
+
+states = ['Alabama', 'Alaska']
+
+base_url = 'https://en.wikipedia.org/wiki/'
+
+value_list = []
+header_list = []
+df_list = []
+
+for state in states:
+
+  print(state)
+  # Create urla and then get html from url
+  url = base_url + state
+  
+  print(url)
+  page = requests.get(url)
+  
+  # Parse HTML
+  # Note you have to pass content attribute of page to BeautifulSoup() function
+  soup = BeautifulSoup(page.content, 'html.parser')
+
+  # Find data from table cells
+  tab = soup.find('table', {'class': 'infobox geography vcard'})
+  table_rows = soup.find_all('tr', {'class': 'mergedrow'})
+
+  # Extract Info from table and clean text 
+  value = [clean_text(cell.find('td').text, False) for cell in table_rows[2:]]
+  header = [clean_text(cell.find('th', {'scope': 'row'}).text, True ) for cell in table_rows[2:]]
+
+  # Store value, header lists as dictionary
+  table_dict = dict(zip(header, value))
+  
+  # Create nested dictionary with state as key and table_dict as value
+  state_dict = {state: table_dict }
+  
+  # Convert dictionary into DataFrame with state as index and header as columns
+  state_df = pd.DataFrame.from_dict(state_dict, orient = 'index')
+  
+  # Append DataFrame to list
+  df_list.append(state_df)
+
+  
+```
+
+## Concatenate DataFrame list into single DataFrame
+
+```{python}
+
+df = pd.concat(df_list)
+
+df.head()
+```
+

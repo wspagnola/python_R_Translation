@@ -1,0 +1,651 @@
+---
+title: "transl_pandas"
+author: "William Spagnola"
+date: "10/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+#use_python3("/Users/Leizel/anacond3/python.exe")
+
+use_condaenv(condaenv='base')
+#Note sys package can help you find location of python.exe
+```
+
+
+# Import Pandas/Numpy
+```{python}
+
+import pandas as pd
+
+import numpy as np
+
+```
+
+
+# I/o: Read in data
+```{r}
+
+pen <- read.csv('data/penguins.csv')
+
+
+pen <- pen[, -1] #drop first column
+
+head(pen)
+tail(pen)
+
+```
+
+
+
+```{python}
+
+#Source: https://github.com/allisonhorst/palmerpenguins
+# Available in palmerpenguins package on CRAN
+pen = pd.read_csv('data/penguins.csv')
+pen = pen.iloc[:,1:] # Drop first column
+pen.head()
+pen.tail()
+```
+
+# Explore Data
+```{r}
+summary(pen)
+
+```
+
+```{python}
+
+pen.describe()
+pen.info()
+```
+
+# Slicing
+
+```{r}
+pen[2:20 , ]
+
+
+```
+
+
+```{r}
+
+# install.packages('tidyverse')
+library(magrittr)
+library(dplyr)
+pen %>% 
+    dplyr::slice(1:20)
+
+
+```
+
+#Filtering 
+
+```{r}
+
+summary(pen)
+
+unique(pen$island)
+unique(pen$species)
+# By Categorical
+ 
+dream <- pen[pen$island == 'Dream' , ]
+head(dream)
+
+
+adelie_gentoo <- pen[pen$species %in% c('Adelie', 'Gentoo') ,  ]
+head(adelie_gentoo)
+tail(adelie_gentoo)
+
+not_adelie <- pen[pen$species != 'Adelie' ,]
+head(not_adelie)
+
+
+# By Numeric
+unique(pen$year)
+pen_2007 <- pen[pen$year == 2007 ,]
+head(pen_2007)
+tail(pen_2007)
+# By Range
+
+range(pen$bill_length_mm, na.rm = TRUE)
+range(pen$bill_depth_mm, na.rm = TRUE)
+range(pen$flipper_length_mm, na.rm =TRUE)
+
+pen_bill_len50 <- pen[pen$bill_length_mm > 50 ,]
+head(pen_bill_len50)
+
+pen_bill_dep15 <- pen[pen$bill_depth_mm <= 15 , ]
+head(pen_bill_dep15)
+
+pen_flip200_210 <- pen[pen$flipper_length_mm > 200 & pen$flipper_length_mm <= 210 , ]
+head(pen_flip200_210)
+```
+
+
+```{r}
+# Tidyverse
+
+```
+
+
+# Pulling / Selectin
+
+```{r}
+
+# With dollar sign
+
+head(pen$island)
+class(pen$island)
+
+head(pen[, 'island'])
+
+
+names(pen)
+# keep as data.frame
+pen[, c('island', 'species', 'island')] # More than one equals data.frame
+head(pen[, 'island', drop =FALSE]) # Drop = False argument keeps class as dataframe when selecting single column
+
+# Boolean
+
+names(pen) %in% c('island', 'species')
+pen[1:5 , names(pen) %in%  c('island', 'species')]
+
+# index
+
+
+which(names(pen) %in% c('island', 'species'))
+
+pen[1:5, which(names(pen) %in% c('island', 'species'))]
+
+# Boolean Regex
+pen[1:5, grepl('species|island', names(pen))]
+
+# Index Regex
+pen[1:5, grep('species|island', names(pen))]
+
+
+```
+
+
+
+```{python}
+
+# Dot Notation results in Series
+pen.bill_depth_mm.head()
+
+# Single bracket also results in Series
+pen['species'].head()
+type(pen['species'])
+
+# Double bracket 
+#This is essentially using a list to select 
+pen[['species']].head()
+type(pen[['species']])
+
+#We can select multiple elements by using a list 
+#Similar to how we used a vector to select multiple columns in R
+pen[['species', 'island']].head()
+
+
+
+```
+
+
+#### Use values attribute to pull values from column as numpy array (instead of Pandas series)
+```{python}
+
+body_mass_arr =  pen[['body_mass_g']].values
+body_mass_arr[0:5]
+
+type(body_mass_arr)
+
+```
+
+
+## iloc
+
+
+```{r}
+
+pen[1:5, 3:4]
+```
+
+
+```{python}
+
+# We can select
+pen.iloc[0:5, 2:4]
+
+```
+
+## Can Mix in R
+```{r}
+
+pen[2:10, c('island', 'species', 'bill_length_mm')]
+```
+
+```{python}
+#pen[0:5, [['island', 'species']]]
+
+
+pen[['island', 'species']][0:5]
+
+pen[0:5][['island', 'species']]
+```
+
+#loc
+
+```{python}
+
+# Index is unique to python
+
+## MOre interesting with time series data
+```
+
+
+# Remove NA
+
+
+
+# Add Column
+
+## Add Scalar
+
+
+## Vector
+
+
+## Conditional Processing 
+ 1. If Else
+ 2. Case When
+
+
+
+# Rename Column
+
+
+# Append
+
+
+
+```{python}
+
+val = np.random.choice(np.arange(1,10), 5, replace = True )
+id = ['m', 'n', 'o', 'p', 'r']
+A = pd.DataFrame(val, id, columns = ['values'])
+
+val = np.random.choice(np.arange(1,10), 4, replace = True)
+id = ['w', 'x', 'y', 'z']
+B = pd.DataFrame(val, id, columns = ['values'])
+
+# Note: pass dataframes to pd.concat() as list 
+append_df = pd.concat([A, B])
+
+append_df2 = A.append(B)
+append_df
+append_df2
+
+```
+
+
+
+```{python}
+
+
+A
+
+new_obs = pd.Series({'values': 3}, name = 'm')
+
+new_obs
+B2 = B.append(new_obs)
+B2.head()
+B2.rename(columns = {'values': 'B_values'}, inplace = True)
+pd.concat([A,B2], axis = 1)
+```
+
+
+#### Append Column-wise
+
+```{python}
+
+A3 = A.reset_index().rename(columns = {'index': 'A_index'})
+B3 = B2.reset_index().rename(columns = {'index': 'B_index'})
+
+
+pd.concat([A3, B3], axis = 1)
+```
+
+
+
+
+# Merge
+
+
+
+
+#### Full Join
+
+```{r}
+
+A <- data.frame(id = c('s','t', 'v', 'x','y','z'), in_A = 1, A_val = sample(1:9, 6, replace = TRUE))
+B <- data.frame(id = c('s', 't', 'u', 'w', 'x'), in_B = 1, B_val = sample(1:9, 5, replace = TRUE))
+
+
+
+full_join <- merge(A, B, by =  'id', all = TRUE)
+full_join[, c('id', 'in_A', 'in_B', 'A_val', 'B_val')]
+
+```
+
+
+
+
+```{python}
+A_val = np.random.choice(np.arange(1,10), 6, replace = True)
+B_val = np.random.choice(np.arange(1,10), 5, replace = True)
+
+A_id = ['s', 't', 'v', 'x', 'y', 'z']
+B_id = ['s', 't','u', 'w', 'x']
+
+# Note: We could also use id as index
+A = pd.DataFrame({'A_id': A_id, 'A_val': A_val})
+B = pd.DataFrame({'B_id': B_id, 'B_val': B_val})
+
+A
+B
+
+merged_full = A.merge(B, left_on = 'A_id', right_on = 'B_id', how = 'outer')
+merged_full
+```
+
+#### Left Join
+
+```{python}
+
+merged_left = A.merge(B, left_on = 'A_id', right_on = 'B_id', how = 'left')
+merged_left
+```
+
+
+#### Inner Join 
+```{python}
+
+merged_inner = A.merge(B, left_on = 'A_id', right_on = 'B_id', how = 'inner')
+merged_inner
+
+
+# Note: not sure if pd.join() can handle keys with different names
+# However, it can do merges when key = index for both datasets
+A_ind = A.set_index('A_id')
+B_ind = B.set_index('B_id')
+A_ind
+B_ind
+
+merged_inner2 = A.join(B, how = 'inner')
+merged_inner2
+```
+
+
+# From Pandas website
+on: Column or index level names to join on. Must be found in both the left and right DataFrame and/or Series objects. If not passed and left_index and right_index are False, the intersection of the columns in the DataFrames and/or Series will be inferred to be the join keys.
+
+
+
+
+
+# Group by / Aggregate
+
+```{r}
+
+cols <- grep('^bill|^body', names(pen))
+cols
+aggregate(pen[, cols], by =list(pen$sex), FUN = mean)
+```
+
+```{r}
+
+
+# Select sex columns and all numeric columns execpt year
+# Filter out cases where sex is missing
+# Group by sex
+# summarize all the rest of the columns
+pen %>% 
+    select(sex, is.numeric, -year) %>% 
+    filter(!is.na(sex)) %>% 
+    group_by(sex) %>% 
+    summarize_all(mean)
+
+```
+
+```{python}
+
+pen.groupby(['sex'])[['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']].mean()
+
+```
+
+
+#### Pandas: value_counts()
+
+```{python}
+pen.species.value_counts()
+```
+
+
+
+### Pandas: Size()
+```{python}
+# Note that size is equivalent to SQL count(*)
+pen.groupby(['year']).size()
+
+```
+
+
+### Pandas: agg()
+
+```{python}
+
+pen.groupby(['species', 'sex']).agg({'sex': 'count'})
+
+```
+
+
+
+
+# Reshape
+
+#### Load in Bacteria data
+```{r}
+
+
+
+# Load in bacteria dataset
+#https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/bacteria.html
+bact_raw <- read.csv('data/bacteria.csv')
+
+# Drop row number column
+bact <- bact_raw[, -(which(names(bact_raw) == 'X'))]
+
+
+rm(bact_raw)
+head(bact)
+
+summary(bact$week)
+
+table(bact$y)
+table(bact$hili)
+table(bact$ap)
+table(bact$trt)
+length(unique(bact$ID))
+
+```
+
+
+
+# Pivot Wider
+```{r}
+
+library(tidyverse)
+bact %>% 
+    pivot_wider(id_cols = ID, values_from = y, names_from = week, names_prefix = 'week')
+```
+
+In Python, you can use the pivot function to convert data from long to wide form
+
+```{python}
+
+```
+
+
+#### Reshape wide to long       
+ 1. In original format,each row represents a country (wide format).  Information about each country's GDP in a given year is stored in separate columns yr2000-2015.
+ Take column names yr2000-yr2015 and store as column called years
+ 2. Take values from yr2000-yr2015 and store
+ 3. Each row will now represent a country in a given year (long form)
+```{r}
+gdp_wide <- read.csv('data/gdp_wide.csv')
+head(gdp_wide)
+```
+
+```{r}
+gdp_long <- gdp_wide %>% 
+                pivot_longer(cols = starts_with('yr'), names_to= 'year', values_to = 'GDP_per_capita') %>% 
+                mutate(year = as.numeric(str_sub(year, start = 3)))
+
+head(gdp_long)
+
+
+```
+
+
+```{python}
+
+
+
+# pd.wide_to_long()
+# pd.stack()
+# pd.melt()
+
+import pandas as pd 
+
+
+# Note: try to figure out why gdp_wide.csv doesn't work
+# Note: created gdp_test.csv by simply copying and pasting data from gdp_wide into another file
+gdp_wide = pd.read_csv('data/gdp_test.csv')
+
+gdp_wide.head()
+
+
+gdp_wide_sub = gdp_wide.iloc[:, 0:4]
+```
+
+```{python}
+
+print('\nWide Format\n')
+gdp_wide.head()
+
+
+gdp_long = pd.melt(gdp_wide, id_vars = ['country_name', 'country_code'],
+           var_name = 'year', value_name = 'GDP')
+
+
+print('\nLong Format\n')
+gdp_long.head()
+
+# Note: Fix yr format
+
+
+```
+
+#### Reshaping from wide to long using pd.stack()
+
+```{python}
+
+
+gdp_wide = pd.read_csv('data/gdp_test.csv')
+
+# Need to set index to country id vars: country_name, country_code
+# inplace = True, makes sure to modify gdp_wide
+# You could also use inplace=False (default) and assign indexed Data.Frame to new object
+gdp_wide.set_index(keys = ['country_name', 'country_code'], inplace = True)
+
+# Note should rename columns to get rid of yr prefix
+
+# Now years are sub index of country index
+# This makes understanding the unit of analysis of a data.frame much easier and is one of the nice benefits of pandas over other data manipulation languages and software
+gdp_wide.stack()
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+?pivot_wider
+
+library(tidyverse)
+
+
+# Note data with unique ids
+#pen_wide <- pen %>%  pivot_wider(id_cols = c('sex', 'island'), names_from = year, values_from = body_mass_g)
+
+#head(pen_wide)
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+### Melt
+
+
+### 
+
+### Stacking
+
+### Unstacking
+```{python}
+
+group_means = pen.groupby(['sex', 'island', 'year']).mean()
+
+group_means.unstack(['year', 'sex'])
+```
+
+
+
+
+# Plot
+
+```{python}
+
+pen.groupby('species')['body_mass_g'].mean().plot(kind = 'bar')
+
+
+```
+
+
+# Next Step: Data Visualization
+ - Actually 
+ - matplotlib is based on matlab
+ - generally, based on numpy arrays
+ - Pandas/Seaborn wrapper makes plotting  it easier to plot data from pandas dataframes with matplotlib 
+
+

@@ -1,0 +1,583 @@
+---
+title: 'R/Python Translation: Seinfeld Text Analysis'
+author: "William Spagnola"
+date: "11/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+
+```{r}
+
+library(dplyr)
+library(stringr)
+library(tm)
+library(tidytext)
+
+```
+
+
+
+## Load Data
+
+Download from https://www.kaggle.com/thec03u5/seinfeld-chronicles
+Data by Aman Shrivastava
+```{r cars}
+
+scripts <- read.csv('data/scripts.csv')[, - 1]
+ep_info <- read.csv('data/episode_info.csv')
+scripts %>%  head()
+```
+
+
+
+```{r}
+
+names(scripts)
+```
+
+```{r}
+script_lst <- scripts[, c('Dialogue', 'SEID') ] %>% split(scripts$SEID)
+
+script_lst[[1]] %>%  str
+
+script_flat <- lapply(script_lst, function(x) str_c(as.vector(x$Dialogue), collapse = ' '))
+```
+```{r}
+script_flat %>%  length
+
+
+script_flat$S01E01 %>% str_sub(1,6)
+```
+
+Create dataframe where each row is episode.
+Columns for dialogue and episode id. 
+```{r}
+
+
+
+flatten_episode <- function(x){
+    
+    dialogue <- str_c(as.vector(x$Dialogue), collapse = ' ') 
+    episode <- unique(x$SEID)
+    
+    df <- data.frame(dialogue, episode)
+    return(df)
+  
+}
+
+scripts_df_flat <- lapply(script_lst, flatten_episode) %>% bind_rows
+
+scripts_df_flat %>% glimpse
+
+
+```
+
+
+
+Load stop words
+```{r}
+data(stop_words)
+stop_words %>%  head
+```
+
+
+Lemmatizing stemming in R
+```{r}
+
+```
+
+
+
+```{r}
+stop_words %>% head
+
+
+character_names <- data.frame(word =c('jerry', 'kramer', 'elaine', 'george', 'newman',
+                                        'seinfeld', 'constanza', 'benes'))
+
+
+filler_words <- data.frame(word = c('hey', 'yeah', 'um','uh','ah', 'huh', 'ya', 'ha', 'em'))
+contractions <- data.frame(word = c('im', 'dont', 'youre'))
+```
+
+
+
+
+Unnest tokens and remove stop words
+
+```{r}
+
+
+script_tokens <- scripts_df_flat %>%   
+                    unnest_tokens(word, dialogue) %>% 
+                    anti_join(stop_words) %>% 
+                    anti_join(character_names) %>% 
+                    anti_join(filler_words) %>% 
+                    anti_join(contractions)
+  
+
+
+word_freq <- script_tokens %>% 
+                 count(word)
+
+word_freq %>%  head
+
+library(wordcloud)
+wordcloud(word =  word_freq$word, freq = word_freq$n, max.words =  50  )
+
+```
+
+
+```{r}
+script_token_cnt <- script_tokens %>% 
+                          group_by(word) %>% 
+                          count() %>% 
+                          arrange(desc(n))
+script_token_cnt[1:100 ,]
+top_words <- script_token_cnt[1:100 , 'word']
+
+
+top_words
+
+
+
+```
+
+```{r}
+ep_info %>%  glimpse
+script_tokens %>%  glimpse
+
+
+tokens <- ep_info %>% 
+            dplyr::select(SEID, Title, AirDate, Writers, Director) %>% 
+            dplyr::full_join(script_tokens, by= c('SEID'='episode'))
+
+tokens %>%  head
+```
+
+
+
+```{r}
+top_words_by_writer <-tokens %>%  
+                        group_by(Writers) %>% 
+                        count(word) %>% 
+                        arrange(desc(n)) %>% 
+                        slice(1:20)
+writers <- ep_info %>%  group_by(Writers) %>%  count() %>% arrange(desc(n))
+writers %>%  head()
+top_writers <- writers[1:10 , ]
+top_writers
+
+by_writer <- top_words_by_writer %>% 
+  rename(word_freq = n) %>% 
+  inner_join(top_writers, by = 'Writers')
+
+by_writer%>% split(f = by_writer$Writers)
+```
+
+
+
+Create Document-Term-Matrix
+```{r}
+
+
+script_dtm_obj <-script_tokens  %>% 
+                  count(episode, word) %>% 
+                  inner_join(top_words, by = 'word') %>% 
+                  cast_dtm(document=episode, term = word, value= n)
+
+script_dtm_1 <- cbind(script_dtm_obj$dimnames$Docs, as.matrix(script_dtm_obj)) %>% 
+                  as_tibble() %>% 
+                  rename(SEID = V1)
+
+script_dtm <- ep_info %>% 
+                left_join(script_dtm_1, by = 'SEID') 
+                
+
+```
+
+
+
+
+```{r}
+
+script_dtm %>%  head
+
+script_dtm$Writers %>%  unique
+script_dtm <- script_dtm %>% 
+                  mutate(larry = str_detect(script_dtm$Writers, 'Larry David')*1)
+
+
+
+script_dtm$larry %>%  table
+
+```
+
+
+```{r}
+idx <- 1:nrow(script_dtm)
+
+train_idx <- sample(idx, length(idx)*.8)
+train_idx
+
+train <- script_dtm[train_idx , ]
+test <- script_dtm[-train_idx ,]
+
+
+dim(train)
+dim(test)
+dim(script_dtm)
+```
+
+Note: Logistic regression doesn't converge
+Can try elasticnet
+
+
+```{r}
+
+scripts_df_flat %>% names
+
+bigrams <- scripts_df_flat %>% unnest_tokens(bigram, dialogue, token = 'ngrams', n = 2)
+
+
+#note: Should remove stop words after unnesting?
+
+top_bigrams <- bigrams %>% 
+                count(bigram, sort = TRUE) %>% 
+                slice(1:100) 
+top_bigrams %>%  head
+?wordcloud
+wordcloud(top_bigrams$bigram, top_bigrams$n, max.words = 20)
+```
+
+Create Document-Term Matrix from Bigrams 
+```{r}
+#Create Document-Term Object
+# bigrams_dtm <- bigrams_appeals %>%
+#   count(opinion_id, bigram) %>%
+#   inner_join(common_bigrams) %>%
+#   cast_dtm(document = opinion_id, term =  bigram,  value = n, weighting = tm::weightTf)
+```
+
+
+
+# Split data 
+```{r}
+
+
+X_cols <- 9:(ncol(train) -1)
+
+
+
+X_train <- train[, X_cols] %>%  mutate_all(as.numeric) %>%  as.matrix
+y_train <- train %>%  select(larry) %>% as.matrix
+```
+
+
+
+```{r}
+fit <- glmnet::cv.glmnet(x = X_train, y=y_train, family = 'binomial', type.measure = 'class')
+
+summary(fit)
+#glmnet::assess.glmnet(fit)
+
+
+X_train %>%  dim
+
+
+y_train_pred <- predict(fit, newx = X_train, type = 'class')
+y_train_pred %>%  dim
+
+
+y_train_pred %>%  head
+y_train_pred %>% table
+
+
+
+# 0 training error ?!!!!
+table(y_train_pred, y_train)
+#glmnet::predict(object = fit, newx = X_train, )
+
+
+
+```
+
+# Test error 
+```{r}
+
+dim(train)
+dim(test)
+
+
+
+
+X_test <- test[, X_cols] %>%  mutate_all(as.numeric) %>%  as.matrix
+y_test <- test %>%  select(larry) %>% as.matrix
+
+
+
+y_test_pred <- predict(fit, newx = X_test, type = 'class')
+
+
+table(y_test_pred, y_test)
+
+
+
+length(y_test_pred)
+
+
+
+test_score <-glmnet::assess.glmnet(fit, X_test, y_test, family = 'binomial')
+
+test_score$mse
+
+```
+
+
+```{r}
+glmnet::coef.glmnet(fit, s= fit$lambda.min)
+
+
+```
+
+
+# N-grams code 
+
+```{r}
+#### PART C: Bigrams ####
+
+#Extract Bigrams
+bigrams_appeals <- appeals.data%>% unnest_tokens(bigram, text, token = 'ngrams', n=2)
+
+#Remove Stop Words 
+bigrams_appeals <- bigrams_appeals %>% 
+  separate(bigram, c('word1', 'word2'), sep = " ") %>% 
+  filter(!word1 %in% custom_dictionary$word) %>% 
+  filter(!word2 %in% custom_dictionary$word) %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+#Find 100 most common bigrams (Note: Used count function instead of group_by and summarize)
+common_bigrams <- bigrams_appeals %>%c 
+  filter(!grepl("â", bigram)) %>%
+  count(bigram, sort = T) %>%
+  slice(1:100) %>%
+  select(bigram)
+
+#Create Document-Term Object
+bigrams_dtm <- bigrams_appeals %>%
+  count(opinion_id, bigram) %>%
+  inner_join(common_bigrams) %>%
+  cast_dtm(document = opinion_id, term =  bigram,  value = n, weighting = tm::weightTf)
+
+#Convert Document-term Object to Tibble; include opinion id
+bigrams_dtm_tbl <- cbind(bigrams_dtm$dimnames$Docs, as.matrix(bigrams_dtm)) %>% 
+  as.tibble() %>% 
+  mutate(V1 = as.numeric(V1)) %>% 
+  rename(opinion_id = V1)
+
+#Create Dataframe with all the opinion_ids
+opinion_id_full <- data.frame(opinion_id = 1:nrow(appeals.data))
+
+#Add opinion ids that contain none of the top-100 bigrams
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% right_join(opinion_id_full)
+missing_rows_idx <- which(complete.cases(bigrams_dtm_tbl)==F)
+bigrams_dtm_tbl  <- bigrams_dtm_tbl %>% mutate_all(function(x){ replace_na(x,0)})
+
+#Sanity Check
+nrow(bigrams_dtm_tbl) == nrow(appeals.data)
+bigrams_dtm_tbl[missing_rows_idx , ]
+anyNA(bigrams_dtm_tbl)
+
+#Add Circuit
+circuit <- ifelse(appeals.data$circuit == "fifth", 1, 0) #Repeat of earlier code from earlier
+bigrams_dtm_tbl <- bigrams_dtm_tbl%>% 
+  arrange(opinion_id) %>% 
+  mutate(circuit = circuit) %>%
+  select(opinion_id, circuit, everything())
+
+#Sanity Check
+mean(bigrams_dtm_tbl$circuit == circuit)
+dim(bigrams_dtm_tbl)
+
+#Convert Fields to Numeric
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% mutate_all(function(x) as.numeric(x)) 
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% mutate(circuit = as.integer(circuit))
+
+
+#### Logistic-Regression Model with Bigrams ####
+#Shuffle Rows and Split into Training and Test Data (Note: Set seed for reproducibility)
+set.seed(1234)
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% slice(sample(1:n()))
+split_size <- ceiling(nrow(bigrams_dtm_tbl) /2)
+train <- bigrams_dtm_tbl %>% slice(1:split_size)
+test <- bigrams_dtm_tbl %>% slice(split_size+1:n())
+
+#Run Logistic Regression on training data
+bigrams_mod <- glm(circuit~.-opinion_id, data = train, family = binomial)
+test$predicted.probability <- predict(bigrams_mod , newdata = test, type='response') 
+
+summary(bigrams_mod)
+'
+Note: Some multicollinearity issues
+'
+
+#Check AUC
+test.pred <- prediction(test$predicted.probability, test$circuit)
+test.perf <- performance(test.pred, "auc")
+circuit_AUC <-  100*test.perf@y.values[[1]]
+circuit_AUC
+
+#Convert to Tibble
+bigram_mod_coefs <- summary(bigrams_mod)$coef
+predictors <- rownames(bigram_mod_coefs)
+bigram_mod_coefs_tbl <- bigram_mod_coefs%>% 
+  as.tibble()  %>% 
+  mutate(Predictor = predictors) %>%
+  select(Predictor, everything()) %>% 
+  arrange(desc(abs(Estimate)))
+
+
+#5 Largest coefficients
+bigram_mod_coefs_tbl %>% slice(1:5)
+
+#5 Smallest Coefficients
+bigram_mod_coefs_tbl %>% arrange(abs(Estimate)) %>% slice(1:5)
+
+#Calculate Odds Ratio of Disposition
+largest_coef <- bigram_mod_coefs_tbl[which.max(abs(bigram_mod_coefs_tbl$Estimate)) , ] %>% 
+  mutate(OR = exp(Estimate))
+largest_coef
+largest_coef$OR - 1
+
+#NOTE: This coefficient seems abnormally large, but is not statistically significant
+
+
+
+#### Part D ####
+#Create Document-Term Object, weight by Tf-Idf
+bigrams_dtm <- bigrams_appeals %>%
+  count(opinion_id, bigram) %>%
+  inner_join(common_bigrams) %>%
+  cast_dtm(document = opinion_id, term =  bigram,  value = n, weighting = tm::weightTfIdf)
+
+#Convert Document-term Object to Tibble; include opinion id
+bigrams_dtm_tbl <- cbind(bigrams_dtm$dimnames$Docs, as.matrix(bigrams_dtm)) %>% 
+  as.tibble() %>% 
+  mutate(V1 = as.numeric(V1)) %>% 
+  rename(opinion_id = V1)
+
+#Create Dataframe with all the opinion_ids
+opinion_id_full <- data.frame(opinion_id = 1:nrow(appeals.data))
+
+#Add opinion ids that contain none of the top-100 bigrams
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% right_join(opinion_id_full)
+missing_rows_idx <- which(complete.cases(bigrams_dtm_tbl)==F)
+bigrams_dtm_tbl  <- bigrams_dtm_tbl %>% mutate_all(function(x){ replace_na(x,0)})
+
+#Sanity Check
+nrow(bigrams_dtm_tbl) == nrow(appeals.data)
+bigrams_dtm_tbl[missing_rows_idx , ]
+anyNA(bigrams_dtm_tbl)
+
+#Add Circuit
+circuit <- ifelse(appeals.data$circuit == "fifth", 1, 0) #Repeat of earlier code from earlier
+bigrams_dtm_tbl <- bigrams_dtm_tbl%>% 
+  arrange(opinion_id) %>% 
+  mutate(circuit = circuit) %>%
+  select(opinion_id, circuit, everything())
+
+#Sanity Check
+mean(bigrams_dtm_tbl$circuit == circuit)
+dim(bigrams_dtm_tbl)
+
+#Convert Fields to Numeric
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% mutate_all(function(x) as.numeric(x)) 
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% mutate(circuit = as.integer(circuit))
+
+
+#### Logistic-Regression Model with Bigrams ####
+#Shuffle Rows and Split into Training and Test Data (Note: Set seed for reproducibility)
+set.seed(1234)
+bigrams_dtm_tbl <- bigrams_dtm_tbl %>% slice(sample(1:n()))
+split_size <- ceiling(nrow(bigrams_dtm_tbl) /2)
+train <- bigrams_dtm_tbl %>% slice(1:split_size)
+test <- bigrams_dtm_tbl %>% slice(split_size+1:n())
+
+#Run Logistic Regression on training data
+bigrams_mod2 <- glm(circuit~.-opinion_id, data=train, family=binomial)
+test$predicted.probability <- predict(bigrams_mod2, newdata=test, type='response')
+
+summary(bigrams_mod2)
+
+#Check AUC
+test.pred <- prediction(test$predicted.probability, test$circuit)
+test.perf <- performance(test.pred, "auc")
+circuit_AUC <-  100*test.perf@y.values[[1]]
+circuit_AUC
+
+#Convert to Tibble
+bigram_mod_coefs <- summary(bigrams_mod2)$coef
+predictors <- rownames(bigram_mod_coefs)
+bigram_mod_coefs_tbl <- bigram_mod_coefs%>% 
+  as.tibble()  %>% 
+  mutate(Predictor = predictors) %>%
+  select(Predictor, everything()) %>% 
+  arrange(desc(abs(Estimate)))
+
+
+#5 Largest coefficients
+bigram_mod_coefs_tbl %>% slice(1:5)
+
+#5 Smallest Coefficients
+bigram_mod_coefs_tbl %>% arrange(abs(Estimate)) %>% slice(1:5)
+
+#Calculate Odds Ratio of Disposition
+largest_coef <- bigram_mod_coefs_tbl[which.max(abs(bigram_mod_coefs_tbl$Estimate)) , ] %>% 
+  mutate(OR = exp(Estimate))
+largest_coef
+largest_coef$OR - 1
+
+
+#### Part F ###
+## Trigram generation
+trigrams_appeals0 <- appeals.data %>% 
+  unnest_tokens(trigram, text, token = 'ngrams', n = 3) %>%
+  separate(trigram, c('word1', 'word2', 'word3'), sep = " ") 
+
+## Removing stopwords
+trigrams_appeals <- trigrams_appeals0 %>% 
+  filter(!word1 %in% custom_dictionary$word,
+         !word2 %in% custom_dictionary$word,
+         !word3 %in% custom_dictionary$word) %>% 
+  unite(trigram, word1, word2, word3, sep = " ")
+
+## Most common trigrams for 5th Circuit
+trigrams_appeals %>% 
+  filter(!grepl("â", trigram), circuit == "fifth",
+         grepl("supreme", trigram)) %>%
+  count(trigram, sort = T) %>%
+  slice(1:10) %>%
+  select(trigram, n) 
+
+## Most common trigrams for 9th Circuit
+trigrams_appeals %>% 
+  filter(!grepl("â", trigram), circuit == "ninth",
+         grepl("supreme", trigram)) %>%
+  count(trigram, sort = T) %>%
+  slice(1:10) %>%
+  select(trigram, n)
+```
+
+#NaiveBayes
+
+
+
+
+
+
+

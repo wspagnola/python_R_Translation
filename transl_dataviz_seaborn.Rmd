@@ -1,0 +1,364 @@
+---
+title: "Data Viz Seaborn"
+author: "William Spagnola"
+date: "10/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(reticulate)
+
+# Note: Can' reset environment after this is run?  Have to restart R session?  
+use_condaenv(condaenv = "seaborn")
+```
+
+
+Check to make sure correct conda environment is being used
+```{r}
+py_config()
+```
+# Import packages
+
+Import tidyverse for R
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+# Could also use library(tidyverse)
+
+```
+
+
+
+Import Numpy, Matplotlib, Pandas
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+```
+
+
+Import Seaborn, Check version
+Note that inside Joke: sns alias stands for Rob Lowe's West Wing Character: Sam Norman Seaborn.  I've also seen sb used as an alias, which probably makes more sense to non-West Wing fans
+```{python}
+
+
+import seaborn as sns
+sns.__version__
+
+```
+# Set Parameters for Default Figure size
+
+```{python}
+
+# Note: Not sure if this works in R Markdown
+plt.rcParams['figure.figsize'] = (5, 4)
+```
+
+
+# Load Data sets
+
+```{r}
+# How do I omit X as column?
+pen <- read.csv('data/penguins.csv')
+
+pen %>% head()
+```
+
+
+```{python}
+
+#Seaborn package comes with penguins dataset!!!!
+pen = sns.load_dataset('penguins')
+
+```
+'
+
+# Seaborn Plots
+  1. Countplot
+  2. barplot
+  3. displot
+  4. boxplot
+  5. Relplot
+  6. lmplot
+  7. lineplot
+  8. pairplot
+  9. catplot
+  10. heatmap
+
+# Count Plot
+This is like geom_bar() in ggplot2.  Geom_bar() simply takes the count of each category that is passed to the x aesthetic.Note that the default settings are pretty ugly. 
+
+```{r geom_bar, fig.width=4, fig.height=3}
+
+pen %>% 
+  ggplot(aes(x=species)) +
+  geom_bar()
+```
+
+With geom_col we can create
+```{r}
+species_cts <-pen %>% 
+                group_by(species) %>% 
+                count()
+
+species_cts %>% head()
+```
+
+```{r geom_col, fig.width=4, fig.height=3}
+species_cts  %>% 
+  ggplot(aes(x=species, y=n)) + 
+  geom_col()
+  
+```
+
+We could pass these arguments altogether
+```{r group_by_then_geom_col,  fig.width=4, fig.height=3}
+
+pen %>% 
+  group_by(species) %>% 
+  count() %>% 
+  ggplot(aes(x= species, y=n)) +
+  geom_col()
+    
+```
+
+
+
+
+
+```{python}
+pen.columns
+```
+
+
+
+```{python}
+
+plt.figure(figsize = (5, 4))
+sns.countplot(x = 'species', data = pen)
+
+```
+
+# Grouped count plot
+Now we'll  used grouped bar plots see the island distribution of each species
+
+
+Note default for groupfill argument for geom_bar is position stacked. 
+Preseve = single argument in position_dodge() ensures that bars have same width.
+```{r grouped_geom_bar, fig.width = 4, fig.height = 3}
+
+# Note how do I make Chinstrap/Gentoo bars same width as Adelie bars
+pen %>% 
+  ggplot(aes(x= species , fill=island, group = island)) + 
+  geom_bar(position = position_dodge(preserve = 'single'))
+```
+
+
+
+You can use the "hue" argument to create a grouped barplot
+```{python}
+
+plt.figure(figsize = (5,4))
+sns.countplot(x = 'species', hue = 'island', data = pen)
+```
+
+# Rel Plot
+This is basically a general function for relationship between two variables: e.g. scatter and line plots 
+
+
+
+
+Scatter Plot
+```{python relplot_scatter, fig.height = 8}
+#Note: kind = 'scatter" is default argument
+#NOte: why does this get cut off
+#plt.figure(figsize =(7,5 ))
+sns.relplot(x = 'flipper_length_mm', y = 'body_mass_g', data = pen, kind = 'scatter' );
+plt.show()
+```
+
+# Line plot
+
+```{r}
+names(pen)
+```
+
+
+```{python}
+pen.columns
+```
+
+```{python}
+# Note: Seaborn dataset does not have year,
+pen_2 = pd.read_csv('data/penguins.csv', index_col = 0)
+pen_2.year = pen_2.year.astype(int)
+pen_2.info()
+
+```
+
+
+```{python}
+pen_by_year = pen_2.groupby(['island', 'year']).agg(year_cnt = ('year', 'count'))
+pen_by_year.reset_index(inplace = True)
+pen_by_year
+```
+
+
+```{python}
+
+# Add markers?
+# Edit X-axis
+# Edit y-label 
+plt.figure(figsize=(10,4))
+sns.relplot(x = 'year', y = 'year_cnt', hue='island', kind = 'line', data = pen_by_year);
+
+plt.show()
+```
+
+```{python}
+#Weight/count by year?
+
+#Yahoo time series  sns.replot
+
+
+yahoo = pd.read_csv('data/yahoo_timeseries_2020.csv', index_col = 0)
+yahoo.head()
+
+```
+
+```{python}
+yahoo.info()
+```
+
+```{r}
+
+library(tidyr)
+
+
+?readr::read_csv
+
+yahoo <- read_csv('data/yahoo_timeseries_2020.csv', 
+                  col_types = list(col_date(), 
+                                   col_double(), col_double(), col_double(),
+                                   col_double(), col_double(), col_double()))
+yahoo %>% 
+  select(Date, High, Low) %>% 
+  pivot_longer(cols = c(High, Low), names_to = 'Key', values_to = 'Price') %>% 
+  ggplot(aes(x=Date, y = Price, color = Key, group = Key)) +
+  geom_line() +
+  ggtitle('Yahoo Stock Price')
+
+```
+
+
+
+```{python}
+plt.figure(figsize = (11,4))
+plt.plot(yahoo[['High','Low']]);
+plt.show()
+```
+
+
+```{python}
+yahoo[['High', 'Low']].plot()
+```
+
+
+```{python}
+sns.lineplot(data =yahoo[['High', 'Low']])
+```
+
+
+
+# Cat Plot
+
+
+
+I guess this just allows you to create facets based on categorical variables.
+
+Similar to facet_grid/facet_wrap in R 
+```{r}
+
+
+
+```
+
+
+
+```{python}
+
+# Note this takes awhile 
+
+# How do I adjust X-axis? 
+sns.catplot(x = 'flipper_length_mm', y = 'body_mass_g',   col = 'species', hue = 'sex', data = pen);
+plt.show()
+```
+
+# Heat Map
+
+
+
+
+
+
+
+
+# Pair Plot
+
+```{python}
+
+sns.pairplot(pen);
+plt.show()
+```
+
+
+# Bar plot
+
+
+
+# Histograpm (Distribution plot?)
+
+
+```{python}
+
+
+sns.displot(
+    pen, x="flipper_length_mm", col="species", row="sex",
+    binwidth=3, height=3, facet_kws=dict(margin_titles=True),
+);
+plt.show();
+
+
+```
+
+
+# Lm plot 
+  
+  
+# Seaborn Themes
+```{python}
+
+sns.set_theme(style="darkgrid")
+
+```
+
+
+
+# Faceting
+
+
+
+
+#Yu
+
+
+
+
+
+
+
+
